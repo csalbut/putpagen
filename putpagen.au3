@@ -101,6 +101,9 @@ While 1
       Case $picker
          PickerHandler()
 
+      Case $id_testline[0]
+         GUICtrlSetData($console, "Testline[0] clicked!")
+
       Case $GUI_EVENT_CLOSE
          Exit
 
@@ -149,8 +152,9 @@ EndFunc
 
 Func PickerHandler()
    Local $ColorNew = _GUIColorPicker_GetColor($picker)
-   $colors[GetSelColorNum()] = $ColorNew
-   GUICtrlSetData($console, $ColorNew)
+   Local $ColorNum = GetSelColorNum()
+   $colors[$ColorNum] = $ColorNew
+   GUICtrlSetColor($id_testline[$ColorNum], $colors[$ColorNum])
 EndFunc
 
 
