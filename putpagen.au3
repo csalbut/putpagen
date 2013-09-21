@@ -2,6 +2,7 @@
 ; Cezary Salbut
 
 #include <GuiConstantsEx.au3>
+#include <WindowsConstants.au3>
 #Include <ColorChooser.au3>
 #Include <ColorPicker.au3>
 
@@ -77,7 +78,7 @@ Global $aPcTexts[$num_colors] = [ _
 
 
 GUICreate("PuTTY palette generator", $gui_width, $gui_height)
-Global $console = GUICtrlCreateList("Debug console", 320, 100, 300, 300)
+Global $console = GUICtrlCreateList("Debug console", 0, 30, 150, 300, $WS_VSCROLL)
 GUICtrlCreateButton("Save", 10, 330, 100, 30)
 
 TestAreaInit()
@@ -96,6 +97,9 @@ While 1
          $ColorText = GUICtrlRead($ColorList)
          $ColorNum = GetColorNum($ColorText)
          _GUIColorPicker_SetColor($picker, $colors[$ColorNum])
+
+      Case $picker
+         PickerHandler()
 
       Case $GUI_EVENT_CLOSE
          Exit
@@ -143,6 +147,13 @@ Func TestAreaInit()
 EndFunc
 
 
+Func PickerHandler()
+   Local $ColorNew = _GUIColorPicker_GetColor($picker)
+   $colors[GetSelColorNum()] = $ColorNew
+   GUICtrlSetData($console, $ColorNew)
+EndFunc
+
+
 Func ColorListHandler()
 EndFunc
 
@@ -160,4 +171,11 @@ Func GetColorNum($PcText)
       $i = $i + 1
 
    Next
+EndFunc
+
+
+; Return number of the currently selected putty color
+Func GetSelColorNum()
+   Local $SelColorText = GUICtrlRead($ColorList)
+   Return GetColorNum($ColorText)
 EndFunc
