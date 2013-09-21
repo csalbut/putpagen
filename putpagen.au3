@@ -9,35 +9,99 @@ Global Enum $BASE_R, $BASE_G, $BASE_B
 
 Global $gui_width = 620
 Global $gui_height = 400
-Global $num_colors = 3
+Global $testline_width = 300
+Global $testline_height = 15
+Global $testline_x = $gui_width - $testline_width
+Global $testline_y = 0
+Global $colorlist_width = 150
+Global $colorlist_height = 300
+Global $colorlist_x = $gui_width - $testline_width - $colorlist_width
+Global $colorlist_y = 0
+
+Global $num_colors = 22
 Global $num_base_colors = 3
 Global $colors[$num_colors] = [ 0xff0000, 0x00ff00, 0x0077ff ]
 Global $current_rgb[$num_base_colors] = [0x64, 0x64, 0x64]
 Global $picker = 0
 
-; GUI
+; Enum Putty Color
+Global Enum _
+   $ePC_FOREGROUND, _
+   $ePC_FOREGROUND_BOLD, _
+   $ePC_BACKGROUND, _
+   $ePC_BACKGROUND_BOLD, _
+   $ePC_CURSOR_TEXT, _
+   $ePC_CURSOR_COLOUR, _
+   $ePC_BLACK, _
+   $ePC_BLACK_BOLD, _
+   $ePC_RED, _
+   $ePC_RED_BOLD, _
+   $ePC_GREEN, _
+   $ePC_GREEN_BOLD, _
+   $ePC_YELLOW, _
+   $ePC_YELLOW_BOLD, _
+   $ePC_BLUE, _
+   $ePC_BLUE_BOLD, _
+   $ePC_MAGENTA, _
+   $ePC_MAGENTA_BOLD, _
+   $ePC_CYAN, _
+   $ePC_CYAN_BOLD, _
+   $ePC_WHITE, _
+   $ePC_WHITE_BOLD
+
+; Array of Putty color text identifiers
+Global $aPcTexts[$num_colors] = [ _
+   "Default Foreground", _
+   "Default Bold Foreground", _
+   "Default Background", _
+   "Default Bold Background", _
+   "Cursor Text", _
+   "Cursor Colour", _
+   "Black", _
+   "Black Bold", _
+   "Red", _
+   "Red Bold", _
+   "Green", _
+   "Green Bold", _
+   "Yellow", _
+   "Yellow Bold", _
+   "Blue", _
+   "Blue Bold", _
+   "Magenta", _
+   "Magenta Bold", _
+   "Cyan", _
+   "Cyan Bold", _
+   "White", _
+   "White Bold" _
+]
+
+
 GUICreate("PuTTY palette generator", $gui_width, $gui_height)
-
-Global $console = GUICtrlCreateEdit("Debug console:" & @CRLF, 320, 100, 300, 300)
-
-; BUTTON
+Global $console = GUICtrlCreateList("Debug console", 320, 100, 300, 300)
 GUICtrlCreateButton("Save", 10, 330, 100, 30)
-
-
-
 
 TestAreaInit()
 PickerInit()
+ColorListInit()
 
 ; GUI MESSAGE LOOP
 GUISetState(@SW_SHOW)
 
 While 1
    Local $id = GUIGetMsg()
+
    Switch $id
-	  Case $GUI_EVENT_CLOSE
-		 Exit
+
+      Case $ColorList
+         $ColorText = GUICtrlRead($ColorList)
+         $ColorNum = GetColorNum($ColorText)
+         _GUIColorPicker_SetColor($picker, $colors[$ColorNum])
+
+      Case $GUI_EVENT_CLOSE
+         Exit
+
    EndSwitch
+
 WEnd
 
 
@@ -46,12 +110,24 @@ Func PickerInit()
 EndFunc
 
 
+Func ColorListInit()
+   Local $style = 0
+   Global $ColorList = GUICtrlCreateList( "", _
+          $colorlist_x, $colorlist_y, $colorlist_width, $colorlist_height, $style )
+
+   For $i = 0 To ($num_colors - 1)
+      GUICtrlSetData($ColorList, $aPcTexts[$i])
+   Next
+
+EndFunc
+
+
 Func TestAreaInit()
    ; Palette test area
    Global $id_testline[$num_colors] 
    Global $testline_width = 300
    Local $id = 0
-   GUISetCoord($gui_width - $testline_width, -15, $testline_width, 15)
+   GUISetCoord($testline_x, $testline_y - $testline_height, $testline_width, $testline_height)
    Opt("GUICoordMode", 2)
  
    For $i = 0 To ($num_colors - 1)
@@ -67,3 +143,21 @@ Func TestAreaInit()
 EndFunc
 
 
+Func ColorListHandler()
+EndFunc
+
+
+Func GetColorNum($PcText)
+   Local $i = 0
+   Local $color = 0
+
+   For $color In $aPcTexts
+
+      If $color = $PcText Then
+         Return $i
+      EndIf 
+
+      $i = $i + 1
+
+   Next
+EndFunc
