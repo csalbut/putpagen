@@ -7,8 +7,6 @@
 #Include <ColorChooser.au3>
 #Include <ColorPicker.au3>
 
-Global Enum $BASE_R, $BASE_G, $BASE_B
-
 Global $iGuiWidth = 620
 Global $iGuiHeight = 400
 Global $iTestlineWidth = 300
@@ -23,8 +21,8 @@ Global $iColorlistY = 0
 Global $iNumColors = 22
 Global $iNumBaseColors = 3
 
-Global $aiCurrentRgb[$iNumBaseColors] = [0x64, 0x64, 0x64]
-Global $aiColorsRgb[$iNumColors] = [ 0xff0000, 0x00ff00, 0x0077ff ]
+Global $aiCurrentRgb[$iNumBaseColors]
+Global $aiColorsRgb[$iNumColors]
 
 ; Array of Putty color text identifiers
 Global $asColorsText[$iNumColors] = [ _
@@ -61,6 +59,7 @@ Global $hBtnSave = GUICtrlCreateButton("Save", 10, 330, 100, 30)
 TestAreaInit()
 PickerInit()
 ColorListInit()
+ReadPalette("arch")
 
 ; GUI MESSAGE LOOP
 GUISetState(@SW_SHOW)
@@ -110,16 +109,17 @@ EndFunc
 
 
 Func TestAreaInit()
-   Global $hTestline[$iNumColors] 
+   Global $hTestline[$iNumColors]
    Global $iTestlineWidth = 300
    Local $h = 0
 
    GUISetCoord($iTestlineX, $iTestlineY - $iTestlineHeight, $iTestlineWidth, $iTestlineHeight)
    Opt("GUICoordMode", 2)
- 
+
    For $i = 0 To ($iNumColors - 1)
       $h = GUICtrlCreateLabel("Sample text, 0123456789 -:.;'", -1, 0)
       GUICtrlSetBkColor($h, 0x000000)
+      $aiColorsRgb[$i] = 0x808080
       GUICtrlSetColor($h, $aiColorsRgb[$i])
       GUICtrlSetFont($h, 10, 400, 1, "Consolas")
       $hTestline[$i] = $h
@@ -167,7 +167,7 @@ Func GetColorNum($sColorText)
 
       If $sColor = $sColorText Then
          Return $i
-      EndIf 
+      EndIf
 
       $i = $i + 1
 
@@ -199,6 +199,7 @@ Func WritePalette($hFile, $sSessionName)
 EndFunc
 
 
+; Convert RGB integer to putty-format string (comma-separated decimals)
 Func RgbItoS($iRgb)
    Local $iR = BitShift(BitAnd($iRgb, 0xff0000), 2 * 8)
    Local $iG = BitShift(BitAnd($iRgb, 0x00ff00), 1 * 8)
@@ -206,4 +207,44 @@ Func RgbItoS($iRgb)
 
    Local $sRgb = String($iR) & "," & String($iG) & "," & String($iB)
    return $sRgb
+EndFunc
+
+
+; Convert RGB string (comma-separated decimals) to integer
+Func RgbStoI($sRgb)
+   Local $asRgb[$iNumBaseColors]
+   $asRgb = StringSplit($sRgb, ",", 2)
+
+   Local $iR = Number($asRgb[0])
+   Local $iG = Number($asRgb[1])
+   Local $iB = Number($asRgb[2])
+
+   Local $iRgb = BitShift($iR, -2 * 8) _
+               + BitShift($iG, -1 * 8) _
+               + BitShift($iB, -0 * 8)
+
+   return $iRgb
+EndFunc
+
+
+; Load a colour palette from saved putty session
+Func ReadPalette($sSession)
+
+   For $i = 0 To ($iNumColors - 1)
+
+      Local $sRgb = RegRead( _
+            "HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\" _
+            & $sSession, "Colour" & String($i))
+
+      Print($sRgb)
+      $aiColorsRgb[$i] = RgbStoI($sRgb)
+      GUICtrlSetColor($hTestline[$i], $aiColorsRgb[$i])
+   Next
+
+EndFunc
+
+
+; Print a string to the debug console
+Func Print($sText)
+   GUICtrlSetData($hDbg, $sText)
 EndFunc
