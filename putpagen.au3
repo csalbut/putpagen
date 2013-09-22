@@ -3,6 +3,7 @@
 
 #include <GuiConstantsEx.au3>
 #include <WindowsConstants.au3>
+#include <Constants.au3>
 #Include <ColorChooser.au3>
 #Include <ColorPicker.au3>
 
@@ -55,7 +56,7 @@ Global $asColorsText[$iNumColors] = [ _
 ; -----------------------------------------------------------------------------
 GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight)
 Global $hDbg = GUICtrlCreateList("Debug console", 0, 30, 150, 300, $WS_VSCROLL)
-GUICtrlCreateButton("Save", 10, 330, 100, 30)
+Global $hBtnSave = GUICtrlCreateButton("Save", 10, 330, 100, 30)
 
 TestAreaInit()
 PickerInit()
@@ -77,6 +78,9 @@ While 1
 
       Case $hTestline[0]
          GUICtrlSetData($hDbg, "Testline[0] clicked!")
+
+      Case $hBtnSave
+         BtnSaveHandler()
 
       Case $GUI_EVENT_CLOSE
          Exit
@@ -140,6 +144,21 @@ Func ColorListHandler()
 EndFunc
 
 
+Func BtnSaveHandler()
+   Local $sFileName = "putty_colors.reg"
+   Local $hFile = FileOpen($sFileName, $FO_OVERWRITE)
+   Local $sSessionName = "arch"
+
+   If $hFile <> -1 Then
+      WritePalette($hFile, $sSessionName)
+      FileClose($hFile)
+   Else
+      MsgBox($MB_OK, "Error", "Unable to save the file.")
+   Endif
+
+EndFunc
+
+
 Func GetColorNum($sColorText)
    Local $i = 0
    Local $sColor = 0
@@ -160,4 +179,31 @@ EndFunc
 Func GetSelColorNum()
    Local $sSelColorText = GUICtrlRead($hColorList)
    Return GetColorNum($sSelColorText)
+EndFunc
+
+
+; Writes the colour palette to an open file
+Func WritePalette($hFile, $sSessionName)
+   FileWriteLine($hFile, "Windows Registry Editor Version 5.00")
+   FileWriteLine($hFile, "")
+   FileWriteLine($hFile, _
+         "[HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\" & _
+         $sSessionName & "]")
+
+   For $i = 0 To ($iNumColors - 1)
+      Local $iRgb = $aiColorsRgb[$i]
+      Local $sRgb = RgbItoS($iRgb)
+      FileWriteLine($hFile, '"Colour' & $i & '"="' & $sRgb & '"')
+      GUICtrlSetData($hDbg, $sRgb)
+   Next
+EndFunc
+
+
+Func RgbItoS($iRgb)
+   Local $iR = BitShift(BitAnd($iRgb, 0xff0000), 2 * 8)
+   Local $iG = BitShift(BitAnd($iRgb, 0x00ff00), 1 * 8)
+   Local $iB = BitShift(BitAnd($iRgb, 0x0000ff), 0 * 8)
+
+   Local $sRgb = String($iR) & "," & String($iG) & "," & String($iB)
+   return $sRgb
 EndFunc
