@@ -169,10 +169,9 @@ Func BtnUpdateHandler()
    Local $hPutty = WinGetHandle ("[CLASS:PuTTY]")
    Print("hPutty: " & $hPutty)
 
-   ; Call current PuTTY's reconfig and wait config box
    _PostMessage($hPutty, $WM_SYSCOMMAND, 0x0050, 0x0)
    Local $hConfig = WinWait("PuTTY Reconfiguration", "", 3)
-   ;WinActivate("PuTTY Reconfiguration")
+   WinActivate("PuTTY Reconfiguration")
    Print("hConfig: " & $hConfig)
 
    Local $hTree = ControlGetHandle($hConfig, "", "[CLASS:SysTreeView32]")
