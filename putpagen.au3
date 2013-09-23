@@ -9,22 +9,39 @@
 #include <GUIListBox.au3>
 #include <GuiTreeView.au3>
 
+Global $iNumColors = 22
+Global $iNumBaseColors = 3
+
 Global $iGuiWidth = 620
-Global $iGuiHeight = 400
+Global $iGuiHeight = 365
+
 Global $iTestlineWidth = 300
 Global $iTestlineHeight = 15
 Global $iTestlineX = $iGuiWidth - $iTestlineWidth
 Global $iTestlineY = 0
+
 Global $iColorlistWidth = 150
 Global $iColorlistHeight = 300
 Global $iColorlistX = $iGuiWidth - $iTestlineWidth - $iColorlistWidth
 Global $iColorlistY = 0
 
-Global $iNumColors = 22
-Global $iNumBaseColors = 3
+Global $iPickerX = $iColorlistX
+Global $iPickerY = $iColorlistY + $iColorlistHeight - 10
+Global $iPickerWidth = $iColorlistWidth
+Global $iPickerHeight = $iTestlineHeight * $iNumColors - $iColorlistHeight + 10
+
+Global $iDbgX = 0
+Global $iDbgY = 0
+Global $iDbgWidth = $iGuiWidth - $iTestlineWidth - $iColorlistWidth
+Global $iDbgHeight = $iColorlistHeight + $iPickerHeight
 
 Global $aiCurrentRgb[$iNumBaseColors]
 Global $aiColorsRgb[$iNumColors]
+
+Global $iNumBtns = 2
+Global $iBtnWidth = $iGuiWidth / 2
+Global $iBtnHeight = 30
+Global $iBtnY = $iColorlistHeight + $iPickerHeight - 6
 
 ; Array of Putty color text identifiers
 Global $asColorsText[$iNumColors] = [ _
@@ -55,9 +72,12 @@ Global $asColorsText[$iNumColors] = [ _
 ; Program start
 ; -----------------------------------------------------------------------------
 GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight)
-Global $hDbg = GUICtrlCreateList("Debug console", 0, 30, 150, 300, $WS_VSCROLL)
-Global $hBtnSave = GUICtrlCreateButton("Save", 10, 330, 100, 30)
-Global $hBtnUpdate = GUICtrlCreateButton("&Update PuTTY", 10, 365, 100, 30)
+Global $hDbg = GUICtrlCreateList("Debug console", $iDbgX, $iDbgY, _
+               $iDbgWidth, $iDbgHeight, $WS_VSCROLL)
+Global $hBtnSave = GUICtrlCreateButton("&Save", _
+                  0, $iBtnY, $iBtnWidth, $iBtnHeight, $BS_FLAT)
+Global $hBtnUpdate = GUICtrlCreateButton("&Update PuTTY", _
+                  $iBtnWidth * 1, $iBtnY, $iBtnWidth, $iBtnHeight)
 
 TestAreaInit()
 PickerInit()
@@ -98,7 +118,9 @@ WEnd
 ; Function definitions
 ; -----------------------------------------------------------------------------
 Func PickerInit()
-   Global $hPicker = _GUIColorPicker_Create('', 5, 5, 60, 23, 0, $CP_FLAG_CHOOSERBUTTON, 0, -1, -1, 0, '', 'Custom...', '_ColorChooserDialog')
+   Global $hPicker = _GUIColorPicker_Create('', $iPickerX, $iPickerY, _
+                     $iPickerWidth, $iPickerHeight, 0, $CP_FLAG_CHOOSERBUTTON, _
+                     0, -1, -1, 0, '', 'Custom...', '_ColorChooserDialog')
 EndFunc
 
 
