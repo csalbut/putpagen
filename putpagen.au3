@@ -6,6 +6,8 @@
 #include <Constants.au3>
 #Include <ColorChooser.au3>
 #Include <ColorPicker.au3>
+#include <GUIListBox.au3>
+#include <GuiTreeView.au3>
 
 Global $iGuiWidth = 620
 Global $iGuiHeight = 400
@@ -55,6 +57,7 @@ Global $asColorsText[$iNumColors] = [ _
 GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight)
 Global $hDbg = GUICtrlCreateList("Debug console", 0, 30, 150, 300, $WS_VSCROLL)
 Global $hBtnSave = GUICtrlCreateButton("Save", 10, 330, 100, 30)
+Global $hBtnUpdate = GUICtrlCreateButton("&Update PuTTY", 10, 365, 100, 30)
 
 TestAreaInit()
 PickerInit()
@@ -80,6 +83,9 @@ While 1
 
       Case $hBtnSave
          BtnSaveHandler()
+
+      Case $hBtnUpdate
+         BtnUpdateHandler()
 
       Case $GUI_EVENT_CLOSE
          Exit
@@ -159,6 +165,36 @@ Func BtnSaveHandler()
 EndFunc
 
 
+Func BtnUpdateHandler()
+   Local $hPutty = WinGetHandle ("[CLASS:PuTTY]")
+   Print("hPutty: " & $hPutty)
+
+   ; Call current PuTTY's reconfig and wait config box
+   _PostMessage($hPutty, $WM_SYSCOMMAND, 0x0050, 0x0)
+   Local $hConfig = WinWait("PuTTY Reconfiguration", "", 3)
+   ;WinActivate("PuTTY Reconfiguration")
+   Print("hConfig: " & $hConfig)
+
+   Local $hTree = ControlGetHandle($hConfig, "", "[CLASS:SysTreeView32]")
+   Print("hTree: " & $hTree)
+   ControlTreeView($hConfig, "", $hTree, "Select", "Window|Colours")
+   ControlSend($hTree, "", Default, "{DOWN}")
+
+   Local $hList = GetChildWindow($hConfig, "ListBox")
+   Print("hList: " & $hList)
+
+   For $i = 0 To ($iNumColors - 1)
+      _GUICtrlListBox_SetCurSel($hList, $i)
+      ControlSetText("", "", 0x41E, GetR($aiColorsRgb[$i]))
+      ControlSetText("", "", 0x420, GetG($aiColorsRgb[$i]))
+      ControlSetText("", "", 0x422, GetB($aiColorsRgb[$i]))
+   Next
+
+   ; Apply
+   ControlClick("", "", 0x3F1)
+EndFunc
+
+
 Func GetColorNum($sColorText)
    Local $i = 0
    Local $sColor = 0
@@ -194,16 +230,30 @@ Func WritePalette($hFile, $sSessionName)
       Local $iRgb = $aiColorsRgb[$i]
       Local $sRgb = RgbItoS($iRgb)
       FileWriteLine($hFile, '"Colour' & $i & '"="' & $sRgb & '"')
-      GUICtrlSetData($hDbg, $sRgb)
    Next
 EndFunc
 
 
+; Return R value from RGB integer
+Func GetR($iRgb)
+   Return BitShift(BitAnd($iRgb, 0xff0000), 2 * 8)
+EndFunc
+
+; Return G value from RGB integer
+Func GetG($iRgb)
+   Return BitShift(BitAnd($iRgb, 0x00ff00), 1 * 8)
+EndFunc
+
+; Return B value from RGB integer
+Func GetB($iRgb)
+   Return BitShift(BitAnd($iRgb, 0x0000ff), 0 * 8)
+EndFunc
+
 ; Convert RGB integer to putty-format string (comma-separated decimals)
 Func RgbItoS($iRgb)
-   Local $iR = BitShift(BitAnd($iRgb, 0xff0000), 2 * 8)
-   Local $iG = BitShift(BitAnd($iRgb, 0x00ff00), 1 * 8)
-   Local $iB = BitShift(BitAnd($iRgb, 0x0000ff), 0 * 8)
+   Local $iR = GetR($iRgb)
+   Local $iG = GetG($iRgb)
+   Local $iB = GetB($iRgb)
 
    Local $sRgb = String($iR) & "," & String($iG) & "," & String($iB)
    return $sRgb
@@ -236,7 +286,6 @@ Func ReadPalette($sSession)
             "HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\" _
             & $sSession, "Colour" & String($i))
 
-      Print($sRgb)
       $aiColorsRgb[$i] = RgbStoI($sRgb)
       GUICtrlSetColor($hTestline[$i], $aiColorsRgb[$i])
    Next
@@ -248,3 +297,26 @@ EndFunc
 Func Print($sText)
    GUICtrlSetData($hDbg, $sText)
 EndFunc
+
+
+; see _SendMessage in SendMessage.au3
+Func _PostMessage($hWnd, $iMsg, $wParam = 0, $lParam = 0, $iReturn = 0, _
+                $wParamType = "wparam", $lParamType = "lparam", $sReturnType = "lresult")
+        Local $aResult = DllCall("user32.dll", $sReturnType, "PostMessageW", "hwnd", _
+                $hWnd, "uint", $iMsg, $wParamType, $wParam, $lParamType, $lParam)
+        If @error Then Return SetError(@error, @extended, "")
+        If $iReturn >= 0 And $iReturn <= 4 Then Return $aResult[$iReturn]
+        Return $aResult
+EndFunc
+
+
+Func GetChildWindow($hWnd, $sClassName)
+        If $hWnd = 0 Then Return 0
+        Local $hChild = _WinAPI_GetWindow($hWnd, $GW_CHILD)
+        While $hChild
+                If _WinAPI_GetClassName($hChild) = $sClassName Then Return $hChild
+                $hChild = _WinAPI_GetWindow($hChild, $GW_HWNDNEXT)
+        WEnd
+        Return 0
+EndFunc
+
