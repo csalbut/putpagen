@@ -4,44 +4,52 @@
 #include <GuiConstantsEx.au3>
 #include <WindowsConstants.au3>
 #include <Constants.au3>
+#include <ScrollBarConstants.au3>
 #Include <ColorChooser.au3>
 #Include <ColorPicker.au3>
 #include <GUIListBox.au3>
 #include <GuiTreeView.au3>
+#include <GuiEdit.au3>
+
+; Global variables
+; -----------------------------------------------------------------------------
+Global $bDbgEnabled = 0
 
 Global $iNumColors = 22
 Global $iNumBaseColors = 3
 
-Global $iGuiWidth = 620
-Global $iGuiHeight = 365
+Global $iColorlistWidth = 150
+Global $iColorlistHeight = 300
+Global $iColorlistX = 0
+Global $iColorlistY = 0
 
 Global $iTestlineWidth = 300
 Global $iTestlineHeight = 15
-Global $iTestlineX = $iGuiWidth - $iTestlineWidth
+Global $iTestlineX = $iColorlistX + $iColorlistWidth
 Global $iTestlineY = 0
 
-Global $iColorlistWidth = 150
-Global $iColorlistHeight = 300
-Global $iColorlistX = $iGuiWidth - $iTestlineWidth - $iColorlistWidth
-Global $iColorlistY = 0
-
-Global $iPickerX = $iColorlistX
-Global $iPickerY = $iColorlistY + $iColorlistHeight - 10
 Global $iPickerWidth = $iColorlistWidth
 Global $iPickerHeight = $iTestlineHeight * $iNumColors - $iColorlistHeight + 10
+Global $iPickerX = $iColorlistX
+Global $iPickerY = $iColorlistY + $iColorlistHeight - 10
 
-Global $iDbgX = 0
+Global $iDbgWidth = 200
+Global $iDbgHeight = $iColorlistHeight + $iPickerHeight - 10
+Global $iDbgX = $iTestlineX + $iTestlineWidth
 Global $iDbgY = 0
-Global $iDbgWidth = $iGuiWidth - $iTestlineWidth - $iColorlistWidth
-Global $iDbgHeight = $iColorlistHeight + $iPickerHeight
+
+Global $iBtnHeight = 30
+Global $iNumBtns = 2
+
+Global $iGuiWidth = $iColorlistWidth + $iTestlineWidth + $iDbgWidth
+Global $iGuiHeight = $iColorlistHeight + $iPickerHeight + $iBtnHeight
+
+Global $iBtnWidth = $iGuiWidth / 2
+Global $iBtnY = $iColorlistHeight + $iPickerHeight - 6
 
 Global $aiCurrentRgb[$iNumBaseColors]
 Global $aiColorsRgb[$iNumColors]
 
-Global $iNumBtns = 2
-Global $iBtnWidth = $iGuiWidth / 2
-Global $iBtnHeight = 30
-Global $iBtnY = $iColorlistHeight + $iPickerHeight - 6
 
 ; Array of Putty color text identifiers
 Global $asColorsText[$iNumColors] = [ _
@@ -71,17 +79,14 @@ Global $asColorsText[$iNumColors] = [ _
 
 ; Program start
 ; -----------------------------------------------------------------------------
-GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight)
-Global $hDbg = GUICtrlCreateList("Debug console", $iDbgX, $iDbgY, _
-               $iDbgWidth, $iDbgHeight, $WS_VSCROLL)
-Global $hBtnSave = GUICtrlCreateButton("&Save", _
-                  0, $iBtnY, $iBtnWidth, $iBtnHeight, $BS_FLAT)
-Global $hBtnUpdate = GUICtrlCreateButton("&Update PuTTY", _
-                  $iBtnWidth * 1, $iBtnY, $iBtnWidth, $iBtnHeight)
+Global $hGuiApp = GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight, 900, 500)
+GuiSetIcon("putpagen.ico")
 
 TestAreaInit()
 PickerInit()
 ColorListInit()
+ButtonsInit()
+DbgInit()
 ReadPalette("arch")
 
 ; GUI MESSAGE LOOP
@@ -99,7 +104,7 @@ While 1
          PickerHandler()
 
       Case $hTestline[0]
-         GUICtrlSetData($hDbg, "Testline[0] clicked!")
+        Print("Testline[0] clicked!")
 
       Case $hBtnSave
          BtnSaveHandler()
@@ -154,6 +159,22 @@ Func TestAreaInit()
    Next
 
    Opt("GUICoordMode", 1)
+EndFunc
+
+
+Func ButtonsInit()
+   Global $hBtnSave = GUICtrlCreateButton("&Save", _
+                     0, $iBtnY, $iBtnWidth, $iBtnHeight)
+   Global $hBtnUpdate = GUICtrlCreateButton("&Update PuTTY", _
+                     $iBtnWidth * 1, $iBtnY, $iBtnWidth, $iBtnHeight)
+EndFunc
+
+
+Func DbgInit()
+   If $bDbgEnabled Then
+      Global $hDbg = GUICtrlCreateEdit("", $iDbgX, $iDbgY, $iDbgWidth, $iDbgHeight, _
+                     $ES_AUTOVSCROLL + $ES_MULTILINE + $ES_READONLY + $WS_VSCROLL)
+   Endif
 EndFunc
 
 
@@ -316,7 +337,12 @@ EndFunc
 
 ; Print a string to the debug console
 Func Print($sText)
-   GUICtrlSetData($hDbg, $sText)
+   If $bDbgEnabled Then
+      $iEnd = StringLen(GUICtrlRead($hDbg))
+      _GUICtrlEdit_SetSel($hDbg, $iEnd, $iEnd)
+      _GUICtrlEdit_Scroll($hDbg, $SB_SCROLLCARET)
+      GUICtrlSetData($hDbg, $sText & @CRLF, 1)
+   EndIf
 EndFunc
 
 
