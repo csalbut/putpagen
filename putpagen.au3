@@ -1,5 +1,6 @@
 ; PuTTY colour palette generator
-; Cezary Salbut
+; Copyright (c) 2013, Cezary Salbut
+; All rights reserved.
 
 #include <GuiConstantsEx.au3>
 #include <WindowsConstants.au3>
