@@ -34,10 +34,17 @@ Global $iPickerHeight = $iTestlineHeight * $iNumColors - $iColorlistHeight + 10
 Global $iPickerX = $iColorlistX
 Global $iPickerY = $iColorlistY + $iColorlistHeight - 10
 
-Global $iDbgWidth = 200
-Global $iDbgHeight = $iColorlistHeight + $iPickerHeight - 10
-Global $iDbgX = $iTestlineX + $iTestlineWidth
-Global $iDbgY = 0
+If $bDbgEnabled Then
+   Global $iDbgWidth = 200
+   Global $iDbgHeight = $iColorlistHeight + $iPickerHeight - 10
+   Global $iDbgX = $iTestlineX + $iTestlineWidth
+   Global $iDbgY = 0
+Else
+   Global $iDbgWidth = 0
+   Global $iDbgHeight = 0
+   Global $iDbgX = 0
+   Global $iDbgY = 0
+Endif
 
 Global $iBtnHeight = 30
 Global $iNumBtns = 2
