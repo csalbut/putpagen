@@ -158,12 +158,14 @@ Func TestAreaInit()
    Opt("GUICoordMode", 2)
 
    For $i = 0 To ($iNumColors - 1)
-      $h = GUICtrlCreateLabel("Sample text, 0123456789 -:.;'", -1, 0)
-      GUICtrlSetBkColor($h, 0x000000)
-      $aiColorsRgb[$i] = 0x808080
-      GUICtrlSetColor($h, $aiColorsRgb[$i])
-      GUICtrlSetFont($h, 10, 400, 1, "Consolas")
-      $hTestline[$i] = $h
+      If NOT IsColorSpecial($i) Then
+         $h = GUICtrlCreateLabel("Sample text, " & $asColorsText[$i], -1, 0)
+         GUICtrlSetBkColor($h, 0x00000000)
+         $aiColorsRgb[$i] = 0x808080
+         GUICtrlSetColor($h, $aiColorsRgb[$i])
+         GUICtrlSetFont($h, 10, 400, 1, "Consolas")
+         $hTestline[$i] = $h
+      Endif
    Next
 
    Opt("GUICoordMode", 1)
@@ -191,6 +193,9 @@ Func PickerHandler()
    Local $iColorNum = GetSelColorNum()
    $aiColorsRgb[$iColorNum] = $iColorNew
    GUICtrlSetColor($hTestline[$iColorNum], $aiColorsRgb[$iColorNum])
+   If $iColorNum = 2 Then
+      BgUpdate()
+   EndIf
 EndFunc
 
 
@@ -340,6 +345,25 @@ Func ReadPalette($sSession)
       GUICtrlSetColor($hTestline[$i], $aiColorsRgb[$i])
    Next
 
+   BgUpdate()
+EndFunc
+
+
+; Update background color to what is currently configured
+Func BgUpdate()
+   For $i = 0 To ($iNumColors - 1)
+      GUICtrlSetBkColor($hTestline[$i], $aiColorsRgb[2])
+   Next
+EndFunc
+
+
+; Backgrounds and cursor stuff are special
+Func IsColorSpecial($iColorNum)
+   If $iColorNum >= 2 AND $iColorNum <= 5 Then
+      Return True
+   Else
+      Return False
+   Endif
 EndFunc
 
 
