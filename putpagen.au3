@@ -29,6 +29,11 @@ Global $iTestlineHeight = 15
 Global $iTestlineX = $iColorlistX + $iColorlistWidth
 Global $iTestlineY = 0
 
+Global $iSessionListWidth = $iTestlineWidth
+Global $iSessionListHeight = 15
+Global $iSessionListX = $iTestlineX
+Global $iSessionListY = $iTestlineHeight * 18
+
 Global $iPickerWidth = $iColorlistWidth
 Global $iPickerHeight = $iTestlineHeight * $iNumColors - $iColorlistHeight + 10
 Global $iPickerX = $iColorlistX
@@ -57,6 +62,9 @@ Global $iBtnY = $iColorlistHeight + $iPickerHeight - 6
 
 Global $aiCurrentRgb[$iNumBaseColors]
 Global $aiColorsRgb[$iNumColors]
+
+Global $asSessions[1]
+Global $sSessionNow = ""
 
 
 ; Array of Putty color text identifiers
@@ -95,7 +103,10 @@ PickerInit()
 ColorListInit()
 ButtonsInit()
 DbgInit()
-ReadPalette("arch")
+SessionsFind($asSessions)
+SessionListInit($asSessions)
+$sSessionNow = $asSessions[0]
+ReadPalette($sSessionNow)
 
 ; GUI MESSAGE LOOP
 GUISetState(@SW_SHOW)
@@ -107,6 +118,9 @@ While 1
 
       Case $hColorList
          ColorListHandler()
+
+      Case $hSessionList
+         SessionListHandler()
 
       Case $hPicker
          PickerHandler()
@@ -144,6 +158,18 @@ Func ColorListInit()
 
    For $i = 0 To ($iNumColors - 1)
       GUICtrlSetData($hColorList, $asColorsText[$i])
+   Next
+
+EndFunc
+
+
+Func SessionListInit($asList)
+   Global $hSessionList = GUICtrlCreateCombo($asList[0], _
+          $iSessionListX, $iSessionListY, $iSessionListWidth, $iSessionListHeight)
+
+   Print("size: " & UBound($asList))
+   For $i = 0 To UBound($asList) - 1
+      GUICtrlSetData($hSessionList, $asList[$i])
    Next
 
 EndFunc
@@ -203,6 +229,14 @@ Func ColorListHandler()
    $sColorText = GUICtrlRead($hColorList)
    $iColorNum = GetColorNum($sColorText)
    _GUIColorPicker_SetColor($hPicker, $aiColorsRgb[$iColorNum])
+EndFunc
+
+
+Func SessionListHandler()
+   Local $s = GUICtrlRead($hSessionList)
+   Print("Combo: " & $s)
+   $sSessionNow = $s
+   ReadPalette($sSessionNow)
 EndFunc
 
 
@@ -335,6 +369,9 @@ EndFunc
 ; Load a colour palette from saved putty session
 Func ReadPalette($sSession)
 
+   Print("Trying to read:" & @CRLF & "HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\" _
+         & $sSession)
+
    For $i = 0 To ($iNumColors - 1)
 
       Local $sRgb = RegRead( _
@@ -399,3 +436,21 @@ Func GetChildWindow($hWnd, $sClassName)
         Return 0
 EndFunc
 
+
+Func SessionsFind(ByRef $asOut)
+   Local $i = 0
+
+   While True
+      Local $sKey = RegEnumKey("HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\", $i + 1)
+      If @error Then ExitLoop
+
+      If UBound($asOut) < $i + 1 Then
+         ReDim $asOut[UBound($asOut) + 1]
+      Endif
+
+      $asOut[$i] = $sKey
+      Print("asOut:" & $asOut[$i])
+      Print($sKey & ", error: " & @error)
+      $i = $i + 1
+   Wend
+EndFunc
