@@ -54,8 +54,13 @@ Endif
 Global $iBtnHeight = 30
 Global $iNumBtns = 2
 
+Global $iTipBarWidth = $iColorlistWidth + $iTestlineWidth + $iDbgWidth
+Global $iTipBarHeight = 15
+Global $iTipBarX = 0
+Global $iTipBarY = $iColorlistHeight + $iPickerHeight + $iBtnHeight
+
 Global $iGuiWidth = $iColorlistWidth + $iTestlineWidth + $iDbgWidth
-Global $iGuiHeight = $iColorlistHeight + $iPickerHeight + $iBtnHeight
+Global $iGuiHeight = $iColorlistHeight + $iPickerHeight + $iBtnHeight + $iTipBarHeight
 
 Global $iBtnWidth = $iGuiWidth / 2
 Global $iBtnY = $iColorlistHeight + $iPickerHeight - 6
@@ -95,7 +100,7 @@ Global $asColorsText[$iNumColors] = [ _
 
 ; Program start
 ; -----------------------------------------------------------------------------
-Global $hGuiApp = GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight, 900, 500)
+Global $hGuiApp = GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight, 900, 450)
 GuiSetIcon("putpagen.ico")
 
 TestAreaInit()
@@ -107,6 +112,7 @@ SessionsFind($asSessions)
 SessionListInit($asSessions)
 $sSessionNow = $asSessions[0]
 ReadPalette($sSessionNow)
+TipBarInit()
 
 ; GUI MESSAGE LOOP
 GUISetState(@SW_SHOW)
@@ -128,8 +134,8 @@ While 1
       Case $hTestline[0]
         Print("Testline[0] clicked!")
 
-      Case $hBtnSave
-         BtnSaveHandler()
+      Case $hBtnExport
+         BtnExportHandler()
 
       Case $hBtnUpdate
          BtnUpdateHandler()
@@ -138,6 +144,8 @@ While 1
          Exit
 
    EndSwitch
+
+   HoverHandler()
 
 WEnd
 
@@ -199,10 +207,18 @@ EndFunc
 
 
 Func ButtonsInit()
-   Global $hBtnSave = GUICtrlCreateButton("&Save", _
+   Global $hBtnExport = GUICtrlCreateButton("&Export", _
                      0, $iBtnY, $iBtnWidth, $iBtnHeight)
    Global $hBtnUpdate = GUICtrlCreateButton("&Update PuTTY", _
                      $iBtnWidth * 1, $iBtnY, $iBtnWidth, $iBtnHeight)
+EndFunc
+
+
+Func TipBarInit()
+   Global $hTipBar = GUICtrlCreateLabel("", _
+                     $iTipBarX, $iTipBarY, $iTipBarWidth, $iTipBarHeight)
+   GUICtrlCreateLabel("", $iTipBarX, $iTipBarY - 1, $iTipBarWidth, 1)
+   GUICtrlSetBkColor(-1, 0x999999)
 EndFunc
 
 
@@ -240,7 +256,7 @@ Func SessionListHandler()
 EndFunc
 
 
-Func BtnSaveHandler()
+Func BtnExportHandler()
    Local $sFileName = "putty_colors.reg"
    Local $hFile = FileOpen($sFileName, $FO_OVERWRITE)
    Local $sSessionName = "arch"
@@ -281,6 +297,37 @@ Func BtnUpdateHandler()
 
    ; Apply
    ControlClick("", "", 0x3F1)
+
+   TipBarPrint("Updated")
+EndFunc
+
+
+Func HoverHandler()
+   Local $aMouse = GUIGetCursorInfo()
+   Static Local $hPrev = 0
+
+   If NOT @error Then
+      Local $h = $aMouse[4]
+
+      If $h <> $hPrev Then
+         Switch $h
+
+            Case $hBtnUpdate
+               TipBarPrint("Set current color settings to opened PuTTY window (Alt+U)")
+            Case $hBtnExport
+               TipBarPrint("Export current color settings to a registry file (Alt+E)")
+            Case $hSessionList
+               TipBarPrint("List of your saved PuTTY sessions")
+            Case $hPicker
+               TipBarPrint("Modify selected color")
+            Case Else
+               TipBarPrint("")
+
+         EndSwitch
+      EndIf
+   EndIf
+
+   $hPrev = $h
 EndFunc
 
 
@@ -414,6 +461,10 @@ Func Print($sText)
    EndIf
 EndFunc
 
+
+Func TipBarPrint($sText)
+   GUICtrlSetdata($hTipBar, $sText)
+EndFunc
 
 ; see _SendMessage in SendMessage.au3
 Func _PostMessage($hWnd, $iMsg, $wParam = 0, $lParam = 0, $iReturn = 0, _
