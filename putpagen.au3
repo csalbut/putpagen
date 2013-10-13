@@ -19,25 +19,25 @@ Global $bDbgEnabled = 0
 Global $iNumColors = 22
 Global $iNumBaseColors = 3
 
-Global $iColorlistWidth = 150
+Global $iColorlistWidth = 140
 Global $iColorlistHeight = 300
 Global $iColorlistX = 0
 Global $iColorlistY = 0
 
 Global $iTestlineWidth = 300
-Global $iTestlineHeight = 15
-Global $iTestlineX = $iColorlistX + $iColorlistWidth
+Global $iTestlineHeight = 16
+Global $iTestlineX = $iColorlistX + $iColorlistWidth + 1
 Global $iTestlineY = 0
 
-Global $iSessionListWidth = $iTestlineWidth
-Global $iSessionListHeight = 15
-Global $iSessionListX = $iTestlineX
-Global $iSessionListY = $iTestlineHeight * 18
-
 Global $iPickerWidth = $iColorlistWidth
-Global $iPickerHeight = $iTestlineHeight * $iNumColors - $iColorlistHeight + 10
+Global $iPickerHeight = 40
 Global $iPickerX = $iColorlistX
 Global $iPickerY = $iColorlistY + $iColorlistHeight - 10
+
+Global $iSessionListWidth = $iTestlineWidth - 20
+Global $iSessionListHeight = 20
+Global $iSessionListX = $iTestlineX + 10
+Global $iSessionListY = $iPickerY + 18
 
 If $bDbgEnabled Then
    Global $iDbgWidth = 200
@@ -57,10 +57,10 @@ Global $iNumBtns = 2
 Global $iTipBarWidth = $iColorlistWidth + $iTestlineWidth + $iDbgWidth
 Global $iTipBarHeight = 15
 Global $iTipBarX = 0
-Global $iTipBarY = $iColorlistHeight + $iPickerHeight + $iBtnHeight
+Global $iTipBarY = $iColorlistHeight + $iPickerHeight + $iBtnHeight - 5
 
 Global $iGuiWidth = $iColorlistWidth + $iTestlineWidth + $iDbgWidth
-Global $iGuiHeight = $iColorlistHeight + $iPickerHeight + $iBtnHeight + $iTipBarHeight
+Global $iGuiHeight = $iColorlistHeight + $iPickerHeight + $iBtnHeight + $iTipBarHeight - 5
 
 Global $iBtnWidth = $iGuiWidth / 2
 Global $iBtnY = $iColorlistHeight + $iPickerHeight - 6
@@ -172,6 +172,7 @@ EndFunc
 
 
 Func SessionListInit($asList)
+   GUICtrlCreateLabel("Session" , $iSessionListX + 2, $iSessionListY - 13)
    Global $hSessionList = GUICtrlCreateCombo($asList[0], _
           $iSessionListX, $iSessionListY, $iSessionListWidth, $iSessionListHeight)
 
@@ -208,17 +209,17 @@ EndFunc
 
 Func ButtonsInit()
    Global $hBtnExport = GUICtrlCreateButton("&Export", _
-                     0, $iBtnY, $iBtnWidth, $iBtnHeight)
-   Global $hBtnUpdate = GUICtrlCreateButton("&Update PuTTY", _
                      $iBtnWidth * 1, $iBtnY, $iBtnWidth, $iBtnHeight)
+   Global $hBtnUpdate = GUICtrlCreateButton("&Update PuTTY", _
+                     0, $iBtnY, $iBtnWidth, $iBtnHeight)
+   SeparatorHoriz(0, $iBtnY - 2, $iGuiWidth)
 EndFunc
 
 
 Func TipBarInit()
    Global $hTipBar = GUICtrlCreateLabel("", _
                      $iTipBarX, $iTipBarY, $iTipBarWidth, $iTipBarHeight)
-   GUICtrlCreateLabel("", $iTipBarX, $iTipBarY - 1, $iTipBarWidth, 1)
-   GUICtrlSetBkColor(-1, 0x999999)
+   SeparatorHoriz(0, $iTipBarY, $iGuiWidth)
 EndFunc
 
 
@@ -504,4 +505,10 @@ Func SessionsFind(ByRef $asOut)
       Print($sKey & ", error: " & @error)
       $i = $i + 1
    Wend
+EndFunc
+
+
+Func SeparatorHoriz($iX, $iY, $iLen)
+   GUICtrlCreateLabel("", $iX, $iY, $iLen, 1)
+   GUICtrlSetBkColor(-1, 0x999999)
 EndFunc
