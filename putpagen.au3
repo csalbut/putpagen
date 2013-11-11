@@ -1,6 +1,14 @@
 ; PuTTY colour palette generator
 ; Copyright (c) 2013, Cezary Salbut
 ; All rights reserved.
+;
+; TODO:
+; * .ini file to remember window position
+; * Allow user to select an export file (standard "save as" dialog)
+; * Add "save" button, to save current color settings to Windows registry
+; * Add version information to titlebar
+; * Font configurable via ini file
+; * Add a button to set default ANSI colours
 
 #include <GuiConstantsEx.au3>
 #include <WindowsConstants.au3>
