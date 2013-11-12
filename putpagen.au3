@@ -3,7 +3,6 @@
 ; All rights reserved.
 ;
 ; TODO:
-; * Allow user to select an export file (standard "save as" dialog)
 ; * Add "save" button, to save current color settings to Windows registry
 ; * Add version information to titlebar
 ; * Font configurable via ini file
@@ -310,15 +309,26 @@ EndFunc
 
 
 Func BtnExportHandler()
-   Local $sFileName = "putty_colors.reg"
-   Local $hFile = FileOpen($sFileName, $FO_OVERWRITE)
-   Local $sSessionName = "arch"
+   Local $sFilePath = FileSaveDialog("Export PuTTy colour settings to a file", "", _
+         "Windows registry file (*.reg)", _
+         $FD_PATHMUSTEXIST + $FD_PROMPTOVERWRITE, _
+         "putty_colours.reg")
 
-   If $hFile <> -1 Then
-      WritePalette($hFile, $sSessionName)
-      FileClose($hFile)
-   Else
-      MsgBox($MB_OK, "Error", "Unable to save the file.")
+   If (NOT @error) Then
+      Local $sExt = StringRight($sFilePath, 4)
+      If ($sExt <> ".reg") Then
+         $sFilePath = $sFilePath & ".reg"
+      EndIf
+
+      Local $hFile = FileOpen($sFilePath, $FO_OVERWRITE)
+      Local $sSessionName = $sSessionNow
+
+      If $hFile <> -1 Then
+         WritePalette($hFile, $sSessionName)
+         FileClose($hFile)
+      Else
+         MsgBox($MB_OK, "Error", "Unable to save the file.")
+      Endif
    Endif
 
 EndFunc
@@ -368,7 +378,7 @@ Func HoverHandler()
             Case $hBtnUpdate
                TipBarPrint("Set current color settings to opened PuTTY window (Alt+U)")
             Case $hBtnExport
-               TipBarPrint("Export current color settings to a registry file (Alt+E)")
+               TipBarPrint("Export current color settings to a session registry file (Alt+E)")
             Case $hSessionList
                TipBarPrint("List of your saved PuTTY sessions")
             Case $hPicker
