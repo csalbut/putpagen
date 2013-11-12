@@ -3,11 +3,11 @@
 ; All rights reserved.
 ;
 ; TODO:
-; * .ini file to remember window position
 ; * Allow user to select an export file (standard "save as" dialog)
 ; * Add "save" button, to save current color settings to Windows registry
 ; * Add version information to titlebar
 ; * Font configurable via ini file
+; * Disable exiting with Esc
 ; * Add a button to set default ANSI colours
 
 #include <GuiConstantsEx.au3>
@@ -108,7 +108,12 @@ Global $asColorsText[$iNumColors] = [ _
 
 ; Program start
 ; -----------------------------------------------------------------------------
-Global $hGuiApp = GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight, 900, 450)
+Local $aiGuiPos[2]
+$aiGuiPos= GetGuiPos("putpagen.ini")
+Local $iGuiX = $aiGuiPos[0]
+Local $iGuiY = $aiGuiPos[1]
+
+Global $hGuiApp = GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight, $iGuiX, $iGuiY)
 GuiSetIcon("putpagen.ico")
 
 TestAreaInit()
@@ -149,6 +154,7 @@ While 1
          BtnUpdateHandler()
 
       Case $GUI_EVENT_CLOSE
+         ConfFileUpdate()
          Exit
 
    EndSwitch
@@ -160,6 +166,44 @@ WEnd
 
 ; Function definitions
 ; -----------------------------------------------------------------------------
+Func GetGuiPos($sConfFile)
+   Local $hConfFile = FileOpen($sConfFile, $FO_READ)
+   Local $aRetPos[2]
+
+   If $hConfFile <> -1 Then
+      Local $aConfEntry
+
+      $aConfEntry = StringSplit(StringStripWs(FileReadLine($hConfFile, 1), _
+                           $STR_STRIPALL), "=", 2)
+      $aRetPos[0] = $aConfEntry[1]
+
+      $aConfEntry = StringSplit(StringStripWs(FileReadLine($hConfFile, 2), _
+                           $STR_STRIPALL), "=", 2)
+      $aRetPos[1] = $aConfEntry[1]
+
+      FileClose($hConfFile)
+   Else
+      $aRetPos[0] = -1
+      $aRetPos[1] = -1
+   EndIf
+
+   Return $aRetPos
+EndFunc
+
+Func ConfFileUpdate()
+   Local $hConfFile = FileOpen("putpagen.ini", $FO_OVERWRITE)
+   If $hConfFile <> -1 Then
+      Local $aiGuiPos = WinGetPos($hGuiApp)
+      FileWriteLine($hConfFile, "gui_x = " & $aiGuiPos[0])
+      FileWriteLine($hConfFile, "gui_y = " & $aiGuiPos[1])
+      FileClose($hConfFile)
+   Else
+      MsgBox($MB_OK, "Error", "Unable to open configuration file.")
+      Exit
+   Endif
+
+EndFunc
+
 Func PickerInit()
    Global $hPicker = _GUIColorPicker_Create('', $iPickerX, $iPickerY, _
                      $iPickerWidth, $iPickerHeight, 0, $CP_FLAG_CHOOSERBUTTON, _
