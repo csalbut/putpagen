@@ -3,7 +3,6 @@
 ; All rights reserved.
 ;
 ; TODO:
-; * Add "save" button, to save current color settings to Windows registry
 ; * Add version information to titlebar
 ; * Font configurable via ini file
 ; * Disable exiting with Esc
@@ -59,7 +58,7 @@ Else
 Endif
 
 Global $iBtnHeight = 30
-Global $iNumBtns = 2
+Global $iNumBtns = 3
 
 Global $iTipBarWidth = $iColorlistWidth + $iTestlineWidth + $iDbgWidth
 Global $iTipBarHeight = 15
@@ -69,7 +68,7 @@ Global $iTipBarY = $iColorlistHeight + $iPickerHeight + $iBtnHeight - 5
 Global $iGuiWidth = $iColorlistWidth + $iTestlineWidth + $iDbgWidth
 Global $iGuiHeight = $iColorlistHeight + $iPickerHeight + $iBtnHeight + $iTipBarHeight - 5
 
-Global $iBtnWidth = $iGuiWidth / 2
+Global $iBtnWidth = $iGuiWidth / $iNumBtns
 Global $iBtnY = $iColorlistHeight + $iPickerHeight - 6
 
 Global $aiCurrentRgb[$iNumBaseColors]
@@ -151,6 +150,9 @@ While 1
 
       Case $hBtnUpdate
          BtnUpdateHandler()
+
+      Case $hBtnSave
+         BtnSaveHandler()
 
       Case $GUI_EVENT_CLOSE
          ConfFileUpdate()
@@ -259,10 +261,12 @@ EndFunc
 
 
 Func ButtonsInit()
-   Global $hBtnExport = GUICtrlCreateButton("&Export", _
-                     $iBtnWidth * 1, $iBtnY, $iBtnWidth, $iBtnHeight)
    Global $hBtnUpdate = GUICtrlCreateButton("&Update PuTTY", _
                      0, $iBtnY, $iBtnWidth, $iBtnHeight)
+   Global $hBtnExport = GUICtrlCreateButton("&Export", _
+                     $iBtnWidth * 1, $iBtnY, $iBtnWidth, $iBtnHeight)
+   Global $hBtnSave = GUICtrlCreateButton("&Save", _
+                     $iBtnWidth * 2, $iBtnY, $iBtnWidth, $iBtnHeight)
    SeparatorHoriz(0, $iBtnY - 2, $iGuiWidth)
 EndFunc
 
@@ -324,7 +328,7 @@ Func BtnExportHandler()
       Local $sSessionName = $sSessionNow
 
       If $hFile <> -1 Then
-         WritePalette($hFile, $sSessionName)
+         ExportPalette($hFile, $sSessionName)
          FileClose($hFile)
       Else
          MsgBox($MB_OK, "Error", "Unable to save the file.")
@@ -365,6 +369,11 @@ Func BtnUpdateHandler()
 EndFunc
 
 
+Func BtnSaveHandler()
+   WritePalette($sSessionNow)
+EndFunc
+
+
 Func HoverHandler()
    Local $aMouse = GUIGetCursorInfo()
    Static Local $hPrev = 0
@@ -379,6 +388,8 @@ Func HoverHandler()
                TipBarPrint("Set current color settings to opened PuTTY window (Alt+U)")
             Case $hBtnExport
                TipBarPrint("Export current color settings to a session registry file (Alt+E)")
+            Case $hBtnSave
+               TipBarPrint("Make PuTTY remember current settings for chosen session (Alt+S)")
             Case $hSessionList
                TipBarPrint("List of your saved PuTTY sessions")
             Case $hPicker
@@ -418,7 +429,7 @@ EndFunc
 
 
 ; Writes the colour palette to an open file
-Func WritePalette($hFile, $sSessionName)
+Func ExportPalette($hFile, $sSessionName)
    FileWriteLine($hFile, "Windows Registry Editor Version 5.00")
    FileWriteLine($hFile, "")
    FileWriteLine($hFile, _
@@ -493,6 +504,32 @@ Func ReadPalette($sSession)
    Next
 
    BgUpdate()
+EndFunc
+
+
+; Save a colour palette to an existing putty session
+Func WritePalette($sSession)
+
+   Print("Trying to write:" & @CRLF & "HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\" _
+         & $sSession)
+
+   For $i = 0 To ($iNumColors - 1)
+
+      $sColorRgb = RgbItoS($aiColorsRgb[$i])
+      Print($sColorRgb)
+      Print("HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\" & $sSession)
+      Print("Colour" & String($i))
+
+      RegWrite( _
+            "HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\" & $sSession, _
+            "Colour" & String($i), "REG_SZ", _
+            $sColorRgb)
+
+      If @error Then
+         MsgBox($MB_OK, "Error", "Error while writing to Windows registry")
+      EndIf
+   Next
+
 EndFunc
 
 
