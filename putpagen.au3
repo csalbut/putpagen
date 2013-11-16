@@ -4,7 +4,6 @@
 ;
 ; TODO:
 ; * Add version information to titlebar
-; * Font configurable via ini file
 ; * Disable exiting with Esc
 ; * Add a button to set default ANSI colours
 
@@ -77,6 +76,8 @@ Global $aiColorsRgb[$iNumColors]
 Global $asSessions[1]
 Global $sSessionNow = ""
 
+Global $sFont = "Consolas"
+Global $iFontSize = 10
 
 ; Array of Putty color text identifiers
 Global $asColorsText[$iNumColors] = [ _
@@ -114,11 +115,11 @@ Local $iGuiY = $aiGuiPos[1]
 Global $hGuiApp = GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight, $iGuiX, $iGuiY)
 GuiSetIcon("putpagen.ico")
 
+DbgInit()
 TestAreaInit()
 PickerInit()
 ColorListInit()
 ButtonsInit()
-DbgInit()
 SessionsFind($asSessions)
 SessionListInit($asSessions)
 $sSessionNow = $asSessions[0]
@@ -170,25 +171,72 @@ WEnd
 Func GetGuiPos($sConfFile)
    Local $hConfFile = FileOpen($sConfFile, $FO_READ)
    Local $aRetPos[2]
+   $aRetPos[0] = -1
+   $aRetPos[1] = -1
 
    If $hConfFile <> -1 Then
       Local $aConfEntry
 
       $aConfEntry = StringSplit(StringStripWs(FileReadLine($hConfFile, 1), _
                            $STR_STRIPALL), "=", 2)
-      $aRetPos[0] = $aConfEntry[1]
+
+      If NOT @error Then
+         $aRetPos[0] = $aConfEntry[1]
+      EndIf
 
       $aConfEntry = StringSplit(StringStripWs(FileReadLine($hConfFile, 2), _
                            $STR_STRIPALL), "=", 2)
-      $aRetPos[1] = $aConfEntry[1]
+
+      If NOT @error Then
+         $aRetPos[1] = $aConfEntry[1]
+      EndIf
 
       FileClose($hConfFile)
-   Else
-      $aRetPos[0] = -1
-      $aRetPos[1] = -1
    EndIf
 
    Return $aRetPos
+EndFunc
+
+Func GetPreviewFont($sConfFile)
+   Local $hConfFile = FileOpen($sConfFile, $FO_READ)
+   Local $sRetFont = "Consolas"
+
+   If $hConfFile <> -1 Then
+      Local $aConfEntry
+      $aConfEntry = StringSplit(FileReadLine($hConfFile, 3), "=", 2)
+
+      If NOT @error Then
+         $sRetFont = StringStripWs($aConfEntry[1], _
+                  $STR_STRIPLEADING + $STR_STRIPTRAILING + $STR_STRIPSPACES)
+      EndIf
+
+      FileClose($hConfFile)
+   EndIf
+
+   Print("Font = " & $sRetFont)
+   Return $sRetFont
+EndFunc
+
+Func GetPreviewFontSize($sConfFile)
+   Local $hConfFile = FileOpen($sConfFile, $FO_READ)
+   Local $iRetSize = 10
+
+   If $hConfFile <> -1 Then
+      Local $aConfEntry
+      $aConfEntry = StringSplit(FileReadLine($hConfFile, 4), "=", 2)
+
+      If NOT @error Then
+         $aConfEntry[1] = StringStripWs($aConfEntry[1], $STR_STRIPALL)
+         If StringIsInt($aConfEntry[1]) Then
+            $iRetSize =  $aConfEntry[1]
+         EndIf
+      EndIf
+
+      FileClose($hConfFile)
+   EndIf
+
+   Print("Size = " & $iRetSize)
+   Return $iRetSize
 EndFunc
 
 Func ConfFileUpdate()
@@ -197,6 +245,8 @@ Func ConfFileUpdate()
       Local $aiGuiPos = WinGetPos($hGuiApp)
       FileWriteLine($hConfFile, "gui_x = " & $aiGuiPos[0])
       FileWriteLine($hConfFile, "gui_y = " & $aiGuiPos[1])
+      FileWriteLine($hConfFile, "font = " & $sFont)
+      FileWriteLine($hConfFile, "font size = " & $iFontSize)
       FileClose($hConfFile)
    Else
       MsgBox($MB_OK, "Error", "Unable to open configuration file.")
@@ -240,6 +290,8 @@ EndFunc
 Func TestAreaInit()
    Global $hTestline[$iNumColors]
    Global $iTestlineWidth = 300
+   $sFont = GetPreviewFont("putpagen.ini")
+   $iFontSize = GetPreviewFontSize("putpagen.ini")
    Local $h = 0
 
    GUISetCoord($iTestlineX, $iTestlineY - $iTestlineHeight, $iTestlineWidth, $iTestlineHeight)
@@ -251,7 +303,7 @@ Func TestAreaInit()
          GUICtrlSetBkColor($h, 0x00000000)
          $aiColorsRgb[$i] = 0x808080
          GUICtrlSetColor($h, $aiColorsRgb[$i])
-         GUICtrlSetFont($h, 10, 400, 1, "Consolas")
+         GUICtrlSetFont($h, $iFontSize, 400, 1, $sFont)
          $hTestline[$i] = $h
       Endif
    Next
