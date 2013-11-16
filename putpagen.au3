@@ -4,7 +4,6 @@
 ;
 ; TODO:
 ; * Add version information to titlebar
-; * Disable exiting with Esc
 ; * Add a button to set default ANSI colours
 
 #include <GuiConstantsEx.au3>
@@ -107,6 +106,8 @@ Global $asColorsText[$iNumColors] = [ _
 
 ; Program start
 ; -----------------------------------------------------------------------------
+AutoItSetOption("GUICloseOnESC", 0)
+
 Local $aiGuiPos[2]
 $aiGuiPos= GetGuiPos("putpagen.ini")
 Local $iGuiX = $aiGuiPos[0]
