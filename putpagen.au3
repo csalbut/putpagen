@@ -424,6 +424,7 @@ EndFunc
 
 Func BtnSaveHandler()
    WritePalette($sSessionNow)
+   TipBarPrint("Colour settings saved!")
 EndFunc
 
 
