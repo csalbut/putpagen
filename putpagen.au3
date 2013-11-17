@@ -3,6 +3,8 @@
 ; All rights reserved.
 ;
 ; TODO:
+; * Remove .reg from default export suggestion
+; * MsgBox when no PuTTY is open, and user tries to update
 ; * Add version information to titlebar
 ; * Add a button to set default ANSI colours
 
@@ -56,7 +58,7 @@ Else
 Endif
 
 Global $iBtnHeight = 30
-Global $iNumBtns = 3
+Global $iNumBtns = 4
 
 Global $iTipBarWidth = $iColorlistWidth + $iTestlineWidth + $iDbgWidth
 Global $iTipBarHeight = 15
@@ -74,6 +76,7 @@ Global $aiColorsRgb[$iNumColors]
 
 Global $asSessions[1]
 Global $sSessionNow = ""
+Global $iSessionsNum = 0
 
 Global $sFont = "Consolas"
 Global $iFontSize = 10
@@ -104,6 +107,32 @@ Global $asColorsText[$iNumColors] = [ _
    "White Bold" _
 ]
 
+Global $asColorsDefault[$iNumColors] = [ _
+   "187,187,187", _
+   "255,255,255", _
+   "0,0,0", _
+   "85,85,85", _
+   "0,0,0", _
+   "0,255,0", _
+   "0,0,0", _
+   "85,85,85", _
+   "187,0,0", _
+   "255,85,85", _
+   "0,187,0", _
+   "85,255,85", _
+   "187,187,0", _
+   "255,255,85", _
+   "0,0,187", _
+   "85,85,255", _
+   "187,0,187", _
+   "255,85,255", _
+   "0,187,187", _
+   "85,255,255", _
+   "187,187,187", _
+   "255,255,255"  _
+]
+
+
 ; Program start
 ; -----------------------------------------------------------------------------
 AutoItSetOption("GUICloseOnESC", 0)
@@ -121,10 +150,16 @@ TestAreaInit()
 PickerInit()
 ColorListInit()
 ButtonsInit()
-SessionsFind($asSessions)
+$iSessionsNum = SessionsFind($asSessions)
 SessionListInit($asSessions)
 $sSessionNow = $asSessions[0]
-ReadPalette($sSessionNow)
+
+If NoSessionsDefined() Then
+    ReadPaletteDefault()
+Else
+    ReadPalette($sSessionNow)
+EndIf
+
 TipBarInit()
 
 ; GUI MESSAGE LOOP
@@ -155,6 +190,9 @@ While 1
 
       Case $hBtnSave
          BtnSaveHandler()
+
+      Case $hBtnLoadDefault
+         BtnLoadDefaultHandler()
 
       Case $GUI_EVENT_CLOSE
          ConfFileUpdate()
@@ -320,6 +358,8 @@ Func ButtonsInit()
                      $iBtnWidth * 1, $iBtnY, $iBtnWidth, $iBtnHeight)
    Global $hBtnSave = GUICtrlCreateButton("&Save", _
                      $iBtnWidth * 2, $iBtnY, $iBtnWidth, $iBtnHeight)
+   Global $hBtnLoadDefault = GUICtrlCreateButton("Load &Defaults", _
+                     $iBtnWidth * 3, $iBtnY, $iBtnWidth, $iBtnHeight)
    SeparatorHoriz(0, $iBtnY - 2, $iGuiWidth)
 EndFunc
 
@@ -366,20 +406,35 @@ EndFunc
 
 
 Func BtnExportHandler()
+
+   Local $sSessionName = ""
+   If NoSessionsDefined() Then
+      While $sSessionName = ""
+         $sSessionName = InputBox("No PuTTY sessions defined", _
+              "Give a name for a PuTTY session:", _
+              "my_ssh_session", "", "", 100)
+         If @error Then
+            Return
+         Endif
+         $sSessionName = StringStripWs($sSessionName, $STR_STRIPALL)
+      Wend
+   Else
+      $sSessionName = $sSessionNow
+   Endif
+
    Local $sFilePath = FileSaveDialog("Export PuTTy colour settings to a file", "", _
          "Windows registry file (*.reg)", _
          $FD_PATHMUSTEXIST + $FD_PROMPTOVERWRITE, _
          "putty_colours.reg")
 
    If (NOT @error) Then
+
       Local $sExt = StringRight($sFilePath, 4)
       If ($sExt <> ".reg") Then
          $sFilePath = $sFilePath & ".reg"
       EndIf
 
       Local $hFile = FileOpen($sFilePath, $FO_OVERWRITE)
-      Local $sSessionName = $sSessionNow
-
       If $hFile <> -1 Then
          ExportPalette($hFile, $sSessionName)
          FileClose($hFile)
@@ -423,10 +478,18 @@ EndFunc
 
 
 Func BtnSaveHandler()
-   WritePalette($sSessionNow)
-   TipBarPrint("Colour settings saved!")
+   If NoSessionsDefined() Then
+      MsgBox(0, "Info", "You don't have any saved PuTTY sessions!")
+   Else
+      WritePalette($sSessionNow)
+      TipBarPrint("Colour settings saved!")
+   Endif
 EndFunc
 
+
+Func BtnLoadDefaultHandler()
+   ReadPaletteDefault()
+EndFunc
 
 Func HoverHandler()
    Local $aMouse = GUIGetCursorInfo()
@@ -444,6 +507,8 @@ Func HoverHandler()
                TipBarPrint("Export current color settings to a session registry file (Alt+E)")
             Case $hBtnSave
                TipBarPrint("Make PuTTY remember current settings for chosen session (Alt+S)")
+            Case $hBtnLoadDefault
+               TipBarPrint("Load default PuTTY colour settings (Alt+D)")
             Case $hSessionList
                TipBarPrint("List of your saved PuTTY sessions")
             Case $hPicker
@@ -538,6 +603,18 @@ Func RgbStoI($sRgb)
                + BitShift($iB, -0 * 8)
 
    return $iRgb
+EndFunc
+
+
+; Load default PuTTY colour palette
+Func ReadPaletteDefault()
+
+   For $i = 0 To ($iNumColors - 1)
+      $aiColorsRgb[$i] = RgbStoI($asColorsDefault[$i])
+      GUICtrlSetColor($hTestline[$i], $aiColorsRgb[$i])
+   Next
+
+   BgUpdate()
 EndFunc
 
 
@@ -642,6 +719,8 @@ Func GetChildWindow($hWnd, $sClassName)
 EndFunc
 
 
+; Returns number of sessions found. And fills the $asOut array with session
+; names
 Func SessionsFind(ByRef $asOut)
    Local $i = 0
 
@@ -658,6 +737,17 @@ Func SessionsFind(ByRef $asOut)
       Print($sKey & ", error: " & @error)
       $i = $i + 1
    Wend
+
+   Return $i
+EndFunc
+
+
+Func NoSessionsDefined()
+    If $iSessionsNum = 0 Then
+        Return True
+    Else
+        Return False
+    EndIf
 EndFunc
 
 
