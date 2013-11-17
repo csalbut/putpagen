@@ -3,8 +3,6 @@
 ; All rights reserved.
 ;
 ; TODO:
-; * Remove .reg from default export suggestion
-; * MsgBox when no PuTTY is open, and user tries to update
 ; * Add version information to titlebar
 ; * Add a button to set default ANSI colours
 
@@ -447,7 +445,13 @@ EndFunc
 
 
 Func BtnUpdateHandler()
+
    Local $hPutty = WinGetHandle ("[CLASS:PuTTY]")
+   If @error Then
+      MsgBox(0, "Putpagen error", "I cannot find any open PuTTY window!")
+      Return
+   Endif
+
    Print("hPutty: " & $hPutty)
 
    _PostMessage($hPutty, $WM_SYSCOMMAND, 0x0050, 0x0)
