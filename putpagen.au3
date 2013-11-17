@@ -1,10 +1,6 @@
 ; PuTTY colour palette generator
 ; Copyright (c) 2013, Cezary Salbut
 ; All rights reserved.
-;
-; TODO:
-; * Add version information to titlebar
-; * Add a button to set default ANSI colours
 
 #include <GuiConstantsEx.au3>
 #include <WindowsConstants.au3>
