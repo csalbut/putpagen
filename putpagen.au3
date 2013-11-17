@@ -140,7 +140,7 @@ $aiGuiPos= GetGuiPos("putpagen.ini")
 Local $iGuiX = $aiGuiPos[0]
 Local $iGuiY = $aiGuiPos[1]
 
-Global $hGuiApp = GUICreate("PuTTY palette generator", $iGuiWidth, $iGuiHeight, $iGuiX, $iGuiY)
+Global $hGuiApp = GUICreate("Putpagen v1.0", $iGuiWidth, $iGuiHeight, $iGuiX, $iGuiY)
 GuiSetIcon("putpagen.ico")
 
 DbgInit()
@@ -352,9 +352,9 @@ EndFunc
 Func ButtonsInit()
    Global $hBtnUpdate = GUICtrlCreateButton("&Update PuTTY", _
                      0, $iBtnY, $iBtnWidth, $iBtnHeight)
-   Global $hBtnExport = GUICtrlCreateButton("&Export", _
-                     $iBtnWidth * 1, $iBtnY, $iBtnWidth, $iBtnHeight)
    Global $hBtnSave = GUICtrlCreateButton("&Save", _
+                     $iBtnWidth * 1, $iBtnY, $iBtnWidth, $iBtnHeight)
+   Global $hBtnExport = GUICtrlCreateButton("&Export", _
                      $iBtnWidth * 2, $iBtnY, $iBtnWidth, $iBtnHeight)
    Global $hBtnLoadDefault = GUICtrlCreateButton("Load &Defaults", _
                      $iBtnWidth * 3, $iBtnY, $iBtnWidth, $iBtnHeight)
