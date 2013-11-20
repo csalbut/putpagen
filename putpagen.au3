@@ -130,9 +130,11 @@ Global $asColorsDefault[$iNumColors] = [ _
 ; Program start
 ; -----------------------------------------------------------------------------
 AutoItSetOption("GUICloseOnESC", 0)
+Local $sConfFileDir = @WorkingDir
+Local $sConfFile = $sConfFileDir & "\putpagen.ini"
 
 Local $aiGuiPos[2]
-$aiGuiPos= GetGuiPos("putpagen.ini")
+$aiGuiPos= GetGuiPos($sConfFile)
 Local $iGuiX = $aiGuiPos[0]
 Local $iGuiY = $aiGuiPos[1]
 
@@ -273,7 +275,7 @@ Func GetPreviewFontSize($sConfFile)
 EndFunc
 
 Func ConfFileUpdate()
-   Local $hConfFile = FileOpen("putpagen.ini", $FO_OVERWRITE)
+   Local $hConfFile = FileOpen($sConfFile, $FO_OVERWRITE)
    If $hConfFile <> -1 Then
       Local $aiGuiPos = WinGetPos($hGuiApp)
       FileWriteLine($hConfFile, "gui_x = " & $aiGuiPos[0])
@@ -323,8 +325,8 @@ EndFunc
 Func TestAreaInit()
    Global $hTestline[$iNumColors]
    Global $iTestlineWidth = 300
-   $sFont = GetPreviewFont("putpagen.ini")
-   $iFontSize = GetPreviewFontSize("putpagen.ini")
+   $sFont = GetPreviewFont($sConfFile)
+   $iFontSize = GetPreviewFontSize($sConfFile)
    Local $h = 0
 
    GUISetCoord($iTestlineX, $iTestlineY - $iTestlineHeight, $iTestlineWidth, $iTestlineHeight)
